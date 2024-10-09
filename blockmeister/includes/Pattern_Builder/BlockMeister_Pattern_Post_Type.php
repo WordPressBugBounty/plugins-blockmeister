@@ -2,39 +2,35 @@
 
 namespace ProDevign\BlockMeister\Pattern_Builder;
 
-use function  ProDevign\BlockMeister\blockmeister_license ;
+use function ProDevign\BlockMeister\blockmeister_license;
 /**
  * Defines and registers Custom post type: 'blockmeister_pattern'
  */
-class BlockMeister_Pattern_Post_Type
-{
-    const  POST_TYPE_NAME = 'blockmeister_pattern' ;
+class BlockMeister_Pattern_Post_Type {
+    const POST_TYPE_NAME = 'blockmeister_pattern';
+
     /**
      * BlockMeister_Block_Post_Type constructor.
      */
-    public function __construct()
-    {
+    public function __construct() {
     }
-    
-    public function init()
-    {
-        add_action( 'init', [ $this, 'register_blockmeister_pattern_post_types' ] );
-        add_filter( 'wp_' . self::POST_TYPE_NAME . '_revisions_to_keep', [ $this, 'revisions_to_keep_filter' ] );
+
+    public function init() {
+        add_action( 'init', [$this, 'register_blockmeister_pattern_post_types'] );
+        add_filter( 'wp_' . self::POST_TYPE_NAME . '_revisions_to_keep', [$this, 'revisions_to_keep_filter'] );
     }
-    
-    public function revisions_to_keep_filter()
-    {
+
+    public function revisions_to_keep_filter() {
         $blockmeister_block_pattern_revisions = (int) get_option( 'blockmeister_block_pattern_revisions', 0 );
         return $blockmeister_block_pattern_revisions;
     }
-    
+
     /**
      * Register our custom post types
      *
      * @return void
      */
-    public function register_blockmeister_pattern_post_types()
-    {
+    public function register_blockmeister_pattern_post_types() {
         // Note: since Gutenberg 8.7 and WP 5.6 the 'singular_name' label is also used for the Tab label in the inspector!
         //       In earlier versions that had a fixed name of 'Document'
         $labels = [
@@ -68,15 +64,15 @@ class BlockMeister_Pattern_Post_Type
         $args = array(
             'labels'              => $labels,
             'supports'            => [
-            'title',
-            // required, else our custom block name won't be available in REST
-            'editor',
-            'excerpt',
-            // required, else our custom block description won't be available in REST
-            'revisions',
-            'author',
-            'custom-fields',
-        ],
+                'title',
+                // required, else our custom block name won't be available in REST
+                'editor',
+                'excerpt',
+                // required, else our custom block description won't be available in REST
+                'revisions',
+                'author',
+                'custom-fields',
+            ],
             'hierarchical'        => false,
             'public'              => false,
             'show_ui'             => true,
@@ -89,7 +85,7 @@ class BlockMeister_Pattern_Post_Type
             'exclude_from_search' => true,
             'publicly_queryable'  => is_user_logged_in(),
             'rewrite'             => false,
-            'capability_type'     => array( self::POST_TYPE_NAME, self::POST_TYPE_NAME . 's' ),
+            'capability_type'     => array(self::POST_TYPE_NAME, self::POST_TYPE_NAME . 's'),
             'map_meta_cap'        => true,
             'show_in_rest'        => true,
         );

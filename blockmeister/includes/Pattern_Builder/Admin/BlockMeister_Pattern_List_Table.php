@@ -2,99 +2,95 @@
 
 namespace ProDevign\BlockMeister\Pattern_Builder\Admin;
 
-use  ProDevign\BlockMeister\BlockMeister ;
-use  ProDevign\BlockMeister\Context ;
-use  ProDevign\BlockMeister\JSON_File_Uploader ;
-use  ProDevign\BlockMeister\Pattern_Builder\BlockMeister_Pattern_Category_Taxonomy ;
-use  ProDevign\BlockMeister\Pattern_Builder\Pattern_Builder ;
-use  ProDevign\BlockMeister\Utils ;
-use  WP_Error ;
-use function  ProDevign\BlockMeister\blockmeister_license ;
-class BlockMeister_Pattern_List_Table
-{
+use ProDevign\BlockMeister\BlockMeister;
+use ProDevign\BlockMeister\Context;
+use ProDevign\BlockMeister\JSON_File_Uploader;
+use ProDevign\BlockMeister\Pattern_Builder\BlockMeister_Pattern_Category_Taxonomy;
+use ProDevign\BlockMeister\Pattern_Builder\Pattern_Builder;
+use ProDevign\BlockMeister\Utils;
+use WP_Error;
+use function ProDevign\BlockMeister\blockmeister_license;
+class BlockMeister_Pattern_List_Table {
     /**
      * @const float
      */
-    const  PREVIEW_SCALE_FACTOR = 0.32 ;
+    const PREVIEW_SCALE_FACTOR = 0.32;
+
     /**
      * Holds regular registered patterns and post based patterns with *any* status
      * (see Custom_Block_Pattern_Registry::register_custom_block_patterns() where post status is set to any for list table use)
      *
      * @var array
      */
-    private  $registered_block_patterns = array() ;
-    public function __construct()
-    {
+    private $registered_block_patterns = [];
+
+    public function __construct() {
     }
-    
-    public function init()
-    {
+
+    public function init() {
         if ( !Context::is_blockmeister_pattern_list_table() ) {
             return;
         }
         if ( isset( $_REQUEST['action'] ) ) {
-            
             if ( $is_not_bulk_action = !isset( $_REQUEST['post'] ) ) {
                 add_filter( 'upload_mimes', function ( $allowed_mime_types ) {
                     $allowed_mime_types['json'] = "application/json";
                     return $allowed_mime_types;
                 } );
-                add_action( 'admin_init', [ $this, 'handle_action_request' ], 1100 );
+                add_action( 'admin_init', [$this, 'handle_action_request'], 1100 );
             }
-        
         }
-        
         if ( isset( $_REQUEST['post_type'] ) && $_REQUEST['post_type'] === Pattern_Builder::POST_TYPE ) {
-            add_action( 'admin_notices', [ $this, 'show_admin_notice_for_action_request_result' ] );
+            add_action( 'admin_notices', [$this, 'show_admin_notice_for_action_request_result'] );
             add_action( 'current_screen', function () {
                 $this->registered_block_patterns = \WP_Block_Patterns_Registry::get_instance()->get_all_registered();
             }, 15 );
             // needs a lower priority then used in Block_Pattern_Registry::init (=10)
-            add_action( 'restrict_manage_posts', [ $this, 'category_filter' ] );
-            add_filter( 'manage_blockmeister_pattern_posts_columns', [ $this, 'customize_blockmeister_pattern_posts_columns' ] );
+            add_action( 'restrict_manage_posts', [$this, 'category_filter'] );
+            add_filter( 'manage_blockmeister_pattern_posts_columns', [$this, 'customize_blockmeister_pattern_posts_columns'] );
             add_filter(
                 'posts_results',
-                [ $this, 'filter_table_list_rows_on_category' ],
+                [$this, 'filter_table_list_rows_on_category'],
                 10,
                 2
             );
             add_action(
                 'manage_blockmeister_pattern_posts_custom_column',
-                [ $this, 'render_custom_columns' ],
+                [$this, 'render_custom_columns'],
                 10,
                 3
             );
             add_filter(
                 'post_date_column_status',
-                [ $this, 'override_status_in_date_column' ],
+                [$this, 'override_status_in_date_column'],
                 10,
                 2
             );
             add_filter(
                 'post_row_actions',
-                [ $this, 'add_and_remove_row_actions' ],
+                [$this, 'add_and_remove_row_actions'],
                 10,
                 2
             );
             add_filter(
                 'post_class',
-                [ $this, 'assign_status_and_virtual_post_classes' ],
+                [$this, 'assign_status_and_virtual_post_classes'],
                 10,
                 3
             );
-            add_action( 'admin_head-edit.php', [ $this, 'add_style' ] );
-            add_action( 'admin_head-edit.php', [ $this, 'add_script' ] );
-            add_action( 'admin_init', [ $this, 'filter_out_negative_post_ids_on_bulk_trash_request' ] );
-            add_filter( 'bulk_actions-edit-blockmeister_pattern', [ $this, 'add_and_remove_bulk_actions' ] );
+            add_action( 'admin_head-edit.php', [$this, 'add_style'] );
+            add_action( 'admin_head-edit.php', [$this, 'add_script'] );
+            add_action( 'admin_init', [$this, 'filter_out_negative_post_ids_on_bulk_trash_request'] );
+            add_filter( 'bulk_actions-edit-blockmeister_pattern', [$this, 'add_and_remove_bulk_actions'] );
             add_filter(
                 'handle_bulk_actions-edit-blockmeister_pattern',
-                [ $this, 'handle_bulk_actions' ],
+                [$this, 'handle_bulk_actions'],
                 10,
                 3
             );
             add_filter(
                 'bulk_post_updated_messages',
-                [ $this, 'filter_bulk_action_result_messages' ],
+                [$this, 'filter_bulk_action_result_messages'],
                 10,
                 2
             );
@@ -103,16 +99,13 @@ class BlockMeister_Pattern_List_Table
                 return 998;
             } );
         }
-    
     }
-    
+
     /**
      * Adds the block pattern category filter to the table nav area
      */
-    public function category_filter()
-    {
-        global  $typenow ;
-        
+    public function category_filter() {
+        global $typenow;
         if ( $typenow === 'blockmeister_pattern' ) {
             $bpc_taxonomy = get_taxonomy( BlockMeister_Pattern_Category_Taxonomy::TAXONOMY_NAME );
             wp_dropdown_categories( [
@@ -126,38 +119,30 @@ class BlockMeister_Pattern_List_Table
                 'hide_empty'      => false,
             ] );
         }
-    
     }
-    
+
     /**
      * Remove non-custom block patterns on bulk trash requests
      */
-    public function filter_out_negative_post_ids_on_bulk_trash_request()
-    {
+    public function filter_out_negative_post_ids_on_bulk_trash_request() {
         $is_bulk_trash_request = isset( $_GET['action'] ) && $_GET['action'] === 'trash' && isset( $_GET['post_type'] ) && $_GET['post_type'] === Pattern_Builder::POST_TYPE && isset( $_GET['post'] );
-        
         if ( $is_bulk_trash_request ) {
             foreach ( $_GET['post'] as $index => $post_id ) {
-                
                 if ( $post_id <= 0 ) {
                     $x = 1;
                     //array_splice($_GET['post'], $index, 1);
-                    unset( $_GET['post'][$index] );
+                    unset($_GET['post'][$index]);
                 }
-            
             }
             $_REQUEST['post'] = $_GET['post'];
         }
-    
     }
-    
-    private function get_count_all()
-    {
+
+    private function get_count_all() {
         return sizeof( $this->registered_block_patterns );
     }
-    
-    private function get_count_inactive()
-    {
+
+    private function get_count_inactive() {
         $inactive_patterns = get_option( 'blockmeister_inactive_patterns', [] );
         $count = 0;
         foreach ( $this->registered_block_patterns as $registered_block_pattern ) {
@@ -167,7 +152,7 @@ class BlockMeister_Pattern_List_Table
         }
         return $count;
     }
-    
+
     /**
      * Helper to create links to edit.php with params.
      *
@@ -178,19 +163,16 @@ class BlockMeister_Pattern_List_Table
      * @return string The formatted link string.
      *
      */
-    private function get_edit_link( $args, $label, $class = '' )
-    {
+    private function get_edit_link( $args, $label, $class = '' ) {
         $url = add_query_arg( $args, 'edit.php' );
         $class_html = '';
         $aria_current = '';
-        
-        if ( !empty($class) ) {
+        if ( !empty( $class ) ) {
             $class_html = sprintf( ' class="%s"', esc_attr( $class ) );
             if ( 'current' === $class ) {
                 $aria_current = ' aria-current="page"';
             }
         }
-        
         return sprintf(
             '<a href="%s"%s%s>%s</a>',
             esc_url( $url ),
@@ -199,7 +181,7 @@ class BlockMeister_Pattern_List_Table
             $label
         );
     }
-    
+
     /**
      * Filters the list of available list table views.
      * By default WP generates filters (and counts), like: All (9) | Published (6) | Trashed (1) | ...
@@ -208,8 +190,7 @@ class BlockMeister_Pattern_List_Table
      *
      * @return string[]
      */
-    public function customize_table_view_links_filtered_on_category( array $views )
-    {
+    public function customize_table_view_links_filtered_on_category( array $views ) {
         $count_filtered_category = $this->get_count_inactive();
         $views['test'] = 'test';
         //		$extra_views = [
@@ -232,7 +213,7 @@ class BlockMeister_Pattern_List_Table
         //		$views        = array_merge( $views_part_a, $extra_views, $views );
         return $views;
     }
-    
+
     /**
      * Filters the status text of the post.
      * If this is a pseudo post (registered pattern) then override the status.
@@ -242,64 +223,59 @@ class BlockMeister_Pattern_List_Table
      *
      * @return string
      */
-    public function override_status_in_date_column( $status, $post )
-    {
+    public function override_status_in_date_column( $status, $post ) {
         if ( $post->ID <= 0 ) {
             return esc_html__( 'Registered', 'blockmeister' );
         }
         return $status;
     }
-    
+
     /**
      * Shows notices related to row actions.
      *
      * Note: bulk actions are handled by core functions in edit.php (and this::filter_bulk_action_result_messages)
      */
-    public function show_admin_notice_for_action_request_result()
-    {
+    public function show_admin_notice_for_action_request_result() {
         if ( !isset( $_GET['status'] ) || !isset( $_GET['notice'] ) ) {
             return;
         }
-        echo  "<div class='notice notice-" . sanitize_html_class( $_GET['status'], 'success' ) . " is-dismissible'>" ;
-        echo  "  <p>" . esc_html( wp_unslash( $_GET['notice'] ) ) . "</p>" ;
-        echo  "</div>" ;
+        echo "<div class='notice notice-" . sanitize_html_class( $_GET['status'], 'success' ) . " is-dismissible'>";
+        echo "  <p>" . esc_html( wp_unslash( $_GET['notice'] ) ) . "</p>";
+        echo "</div>";
     }
-    
-    public function add_script()
-    {
-        
+
+    public function add_script() {
         if ( $inject_import_elements = current_user_can( 'publish_blockmeister_patterns' ) && current_user_can( 'import' ) ) {
             $submit_to = add_query_arg( [
                 'post_status' => ( isset( $_GET['post_status'] ) ? $_GET['post_status'] : false ),
                 'filter'      => ( isset( $_GET['filter'] ) ? $_GET['filter'] : false ),
             ], self_admin_url( "edit.php?post_type=blockmeister_pattern" ) );
-            $file_uploader = new JSON_File_Uploader( $submit_to );
+            // url will be escaped in JSON_File_Uploader
+            $file_uploader = new JSON_File_Uploader($submit_to);
             $file_uploader->init( true );
             $file_uploader_html = $file_uploader->get_html();
-            $import_label = __( 'Import', 'blockmeister' );
+            $import_label = esc_html__( 'Import', 'blockmeister' );
         }
-        
         ?>
         <script id="blockmeister-pattern-list-table-script">
 
             jQuery(document).ready(function ($) {
 
 				<?php 
-        
         if ( $inject_import_elements ) {
             ?>
 
                 // inject import button
                 var importButton = $('.wp-heading-inline + .page-title-action').after(`
                         <a href="#" id="import-button" class="page-title-action"><?php 
-            echo  esc_html( $import_label ) ;
+            echo esc_html( $import_label );
             ?></a>
                     `);
 
                 // inject upload form
                 var uploadForm = $('#import-button').after(`
                         <?php 
-            echo  $file_uploader_html ;
+            echo $file_uploader_html;
             ?>
                     `);
 
@@ -310,7 +286,6 @@ class BlockMeister_Pattern_List_Table
 
 				<?php 
         }
-        
         ?>
 
                 // remove links from title of registered patterns (so no actual post)
@@ -320,10 +295,9 @@ class BlockMeister_Pattern_List_Table
         </script>
 		<?php 
     }
-    
-    public function add_style()
-    {
-        global  $post_type ;
+
+    public function add_style() {
+        global $post_type;
         if ( 'blockmeister_pattern' !== $post_type ) {
             return;
         }
@@ -340,7 +314,7 @@ class BlockMeister_Pattern_List_Table
         </style>
 		<?php 
     }
-    
+
     /**
      * Filters the list of CSS class names for the current pattern and adds either
      * active or inactive class AND virtual-post class if applicable
@@ -351,8 +325,7 @@ class BlockMeister_Pattern_List_Table
      *
      * @return string[] The update $classes array
      */
-    public function assign_status_and_virtual_post_classes( array $classes, array $class, $post_id )
-    {
+    public function assign_status_and_virtual_post_classes( array $classes, array $class, $post_id ) {
         // status class:
         $pattern_name = $this->get_pattern_name( $post_id );
         // check if pattern_name is active or not and add respective class
@@ -365,7 +338,7 @@ class BlockMeister_Pattern_List_Table
         }
         return $classes;
     }
-    
+
     /**
      * Looks up and returns the pattern name associated with the given post.
      * Note: drafts are by default unnamed, so we generate a name for those.
@@ -374,8 +347,7 @@ class BlockMeister_Pattern_List_Table
      *
      * @return mixed|string
      */
-    private function get_pattern_name( $post )
-    {
+    private function get_pattern_name( $post ) {
         $is_post_object = is_object( $post );
         $post_id = ( $is_post_object ? $post->ID : (int) $post );
         $is_registered_block_pattern = $post_id <= 0;
@@ -390,7 +362,7 @@ class BlockMeister_Pattern_List_Table
         $pattern_name = BlockMeister::get_default_block_namespace() . '/' . $post_name;
         return $pattern_name;
     }
-    
+
     /**
      * By default, WordPress will place the Categories column after the Author column.
      * With this filter we reverse that.
@@ -399,16 +371,14 @@ class BlockMeister_Pattern_List_Table
      *
      * @return array The reordered columns
      */
-    public function customize_blockmeister_pattern_posts_columns( $columns )
-    {
+    public function customize_blockmeister_pattern_posts_columns( $columns ) {
         $author_column_label = $columns['author'];
         // reuse later, so no need to translate
-        unset( $columns['taxonomy-pattern_category'] );
-        unset( $columns['taxonomy-pattern_keyword'] );
-        unset( $columns['author'] );
+        unset($columns['taxonomy-pattern_category']);
+        unset($columns['taxonomy-pattern_keyword']);
+        unset($columns['author']);
         $columns_ordered = [];
         foreach ( $columns as $key => $title ) {
-            
             if ( $key == 'date' ) {
                 // Put the custom columns before the Author column
                 //$columns_ordered['pattern_enabled']    = esc_html__( 'Enabled', 'blockmeister' );
@@ -416,12 +386,11 @@ class BlockMeister_Pattern_List_Table
                 $columns_ordered['pattern_keywords'] = esc_html__( 'Keywords', 'blockmeister' );
                 $columns_ordered['pattern_author'] = $author_column_label;
             }
-            
             $columns_ordered[$key] = $title;
         }
         return $columns_ordered;
     }
-    
+
     /**
      * Echoes the content of the custom column per given post_id.
      * Fires for each custom column of list table.
@@ -430,8 +399,7 @@ class BlockMeister_Pattern_List_Table
      * @param int $post_id The current post ID.
      *
      */
-    public function render_custom_columns( $column_name, $post_id )
-    {
+    public function render_custom_columns( $column_name, $post_id ) {
         $registered_block_pattern = null;
         if ( $is_registered_block_pattern = $post_id <= 0 ) {
             $registered_block_pattern = $this->registered_block_patterns[-$post_id];
@@ -455,24 +423,20 @@ class BlockMeister_Pattern_List_Table
                 $this->render_unknown_column( $post_id, $is_registered_block_pattern, $column_name );
         }
     }
-    
-    private function render_pattern_categories_column( $post_id, $is_registered_block_pattern, $registered_block_pattern )
-    {
+
+    private function render_pattern_categories_column( $post_id, $is_registered_block_pattern, $registered_block_pattern ) {
         $categories = '';
         $base_list_table_url = get_admin_url() . 'edit.php?post_type=blockmeister_pattern&filter_action=Filter&category=';
-        
         if ( $is_registered_block_pattern ) {
             // get data from registered block pattern
             $category_registry = \WP_Block_Pattern_Categories_Registry::get_instance();
             $pattern_categories = ( isset( $registered_block_pattern['categories'] ) ? $registered_block_pattern['categories'] : [] );
             foreach ( $pattern_categories as $category_name ) {
-                
                 if ( $registered_categories = $category_registry->get_registered( $category_name ) ) {
                     $category_list_table_url = $base_list_table_url . esc_html( $registered_categories['name'] );
                     $category_link = '<a href="' . $category_list_table_url . '">' . esc_html( $registered_categories['label'] ) . '</a>';
                     $categories .= (( $categories !== '' ? ', ' : '' )) . $category_link;
                 }
-            
             }
         } else {
             // custom block pattern
@@ -483,15 +447,12 @@ class BlockMeister_Pattern_List_Table
                 $categories .= (( $categories !== '' ? ', ' : '' )) . $category_link;
             }
         }
-        
         $categories = ( $categories !== '' ? $categories : '—' );
-        echo  $categories ;
+        echo $categories;
     }
-    
-    private function render_pattern_keywords_column( $post_id, $is_registered_block_pattern, $registered_block_pattern )
-    {
+
+    private function render_pattern_keywords_column( $post_id, $is_registered_block_pattern, $registered_block_pattern ) {
         $keywords = '';
-        
         if ( $is_registered_block_pattern ) {
             $pattern_keywords = ( isset( $registered_block_pattern['keywords'] ) ? $registered_block_pattern['keywords'] : [] );
             foreach ( $pattern_keywords as $keyword_name ) {
@@ -504,28 +465,24 @@ class BlockMeister_Pattern_List_Table
                 $keywords .= (( $keywords !== '' ? ', ' : '' )) . $object_term->name;
             }
         }
-        
         $keywords = ( $keywords !== '' ? $keywords : '—' );
-        echo  esc_html( $keywords ) ;
+        echo esc_html( $keywords );
     }
-    
-    private function render_pattern_author_column( $post_id, $is_registered_block_pattern, $registered_block_pattern )
-    {
-        
+
+    private function render_pattern_author_column( $post_id, $is_registered_block_pattern, $registered_block_pattern ) {
         if ( $is_registered_block_pattern ) {
             $name_parts = explode( '/', $registered_block_pattern['name'] );
             // remote loaded core patterns are not namespaced, so we give those a default of 'pattern directory'!
             $namespace = ( sizeof( $name_parts ) > 1 ? $name_parts[0] : 'pattern directory' );
-            echo  ucfirst( esc_html( $namespace ) ) ;
+            echo ucfirst( esc_html( $namespace ) );
         } else {
             $post = get_post( $post_id );
             $author_id = $post->post_author;
             $author = get_the_author_meta( 'display_name', $author_id );
-            echo  esc_html( $author ) ;
+            echo esc_html( $author );
         }
-    
     }
-    
+
     /**
      * We only allow rendering of custom column content for custom patterns.
      * This allows e.g. translation plugins to add a translations column.
@@ -534,13 +491,12 @@ class BlockMeister_Pattern_List_Table
      * @param $is_registered_block_pattern
      * @param $column_name
      */
-    private function render_unknown_column( $post_id, $is_registered_block_pattern, $column_name )
-    {
+    private function render_unknown_column( $post_id, $is_registered_block_pattern, $column_name ) {
         if ( $is_registered_block_pattern ) {
-            echo  "<span class='not-applicable'>—</span><style>tr#post-{$post_id} > td.column-{$column_name} *:not(.not-applicable) { display: none}</style>" ;
+            echo "<span class='not-applicable'>—</span><style>tr#post-{$post_id} > td.column-{$column_name} *:not(.not-applicable) { display: none}</style>";
         }
     }
-    
+
     /**
      * Filters the action links displayed for each term in the blockmeister_pattern list table.
      *
@@ -549,27 +505,22 @@ class BlockMeister_Pattern_List_Table
      *
      * @return array|string[]
      */
-    public function add_and_remove_row_actions( $actions, $post )
-    {
+    public function add_and_remove_row_actions( $actions, $post ) {
         $is_registered_block_pattern = $post->ID <= 0;
         // Remove default row actions for pseudo (registered) posts
-        
         if ( $is_registered_block_pattern ) {
             $actions = [];
         } else {
-            unset( $actions['view'] );
+            unset($actions['view']);
             //unset( $actions ['preview'] );
         }
-        
         // Remove 'quick edit' - because of bug which hides preview on opening quick edit
-        unset( $actions['inline hide-if-no-js'] );
+        unset($actions['inline hide-if-no-js']);
         // Add Activate or Deactivate row action
-        
         if ( current_user_can( 'publish_blockmeister_patterns' ) ) {
             // add activate/deactivate row action:
             //$pattern_name = $is_registered_block_pattern ? $post->post_name : BlockMeister::get_default_block_namespace() . '/' . $post->post_name;
             $pattern_name = $this->get_pattern_name( $post );
-            
             if ( Utils::is_pattern_active( $pattern_name ) ) {
                 $action = 'deactivate';
                 /* translators: %s: Pattern name. */
@@ -582,12 +533,11 @@ class BlockMeister_Pattern_List_Table
                 $aria_label = sprintf( esc_html_x( 'Activate %s', 'pattern' ), $pattern_name );
                 $label = __( 'Activate', 'blockmeister' );
             }
-            
             $action_url = add_query_arg( [
                 'pattern' => urlencode( $pattern_name ),
                 'action'  => $action,
             ] );
-            $action_url = remove_query_arg( [ 'notice', 'status' ], $action_url );
+            $action_url = remove_query_arg( ['notice', 'status'], $action_url );
             $actions[$action] = sprintf(
                 '<a href="%s" id="%s-%s" aria-label="%s">%s</a>',
                 wp_nonce_url( $action_url, $action, 'bm_nonce' ),
@@ -597,21 +547,18 @@ class BlockMeister_Pattern_List_Table
                 esc_html( $label )
             );
         }
-        
         return $actions;
     }
-    
+
     /**
      * Creates and returns a json string, containing all pattern data AND
      * keywords and categories. All terms will contain their definition data
      * in order to create the term on the import site when the term is missing.
      */
-    private function get_registered_pattern_for_export_json( $pattern_name )
-    {
+    private function get_registered_pattern_for_export_json( $pattern_name ) {
         $patterns_registry = \WP_Block_Patterns_Registry::get_instance();
         $registered_pattern = $patterns_registry->get_registered( $pattern_name );
         $registered_pattern['__file'] = "blockmeister_pattern";
-        
         if ( isset( $registered_pattern['categories'] ) ) {
             // add category registration data
             $category_registry = \WP_Block_Pattern_Categories_Registry::get_instance();
@@ -620,10 +567,9 @@ class BlockMeister_Pattern_List_Table
                 $registered_pattern['categories'][$index] = $category_term;
             }
         }
-        
         return wp_json_encode( $registered_pattern );
     }
-    
+
     /**
      * Filters the pattern list table bulk actions drop-down.
      *
@@ -634,8 +580,7 @@ class BlockMeister_Pattern_List_Table
      *
      * @return string[]
      */
-    public function add_and_remove_bulk_actions( $actions )
-    {
+    public function add_and_remove_bulk_actions( $actions ) {
         $filter = ( isset( $_GET['filter'] ) ? $_GET['filter'] : false );
         if ( !$filter || 'active' !== $filter ) {
             $actions['activate'] = esc_html__( 'Activate', 'blockmeister' );
@@ -643,10 +588,10 @@ class BlockMeister_Pattern_List_Table
         if ( !$filter || 'inactive' !== $filter ) {
             $actions['deactivate'] = esc_html__( 'Deactivate', 'blockmeister' );
         }
-        unset( $actions['edit'] );
+        unset($actions['edit']);
         return $actions;
     }
-    
+
     /**
      * Handles row actions and form upload actions
      *
@@ -654,9 +599,8 @@ class BlockMeister_Pattern_List_Table
      * - Checks user intend (admin referer)
      * - action handlers it calls will check required capbilites
      */
-    public function handle_action_request()
-    {
-        global  $pagenow ;
+    public function handle_action_request() {
+        global $pagenow;
         $handled_actions = [
             'activate',
             'deactivate',
@@ -670,7 +614,6 @@ class BlockMeister_Pattern_List_Table
             return;
         }
         $num = false;
-        
         if ( check_admin_referer( $action, 'bm_nonce' ) ) {
             $post_status_query_arg = ( isset( $_GET['post_status'] ) ? $_GET['post_status'] : false );
             $filter_query_arg = ( isset( $_GET['filter'] ) ? $_GET['filter'] : false );
@@ -692,7 +635,7 @@ class BlockMeister_Pattern_List_Table
                     $notice = $this->import_patterns();
                     break;
                 default:
-                    $notice = new WP_Error( 'unknown-action', __( 'Unknown action', 'blockmeister' ) );
+                    $notice = new WP_Error('unknown-action', __( 'Unknown action', 'blockmeister' ));
             }
             $query_args = [
                 'notice'        => urlencode( ( is_wp_error( $notice ) ? $notice->get_error_message() : $notice ) ),
@@ -723,46 +666,37 @@ class BlockMeister_Pattern_List_Table
             // will be sanitized by wp_sanitize_redirect
             exit;
         }
-    
     }
-    
-    public function activate_pattern( $pattern_name )
-    {
-        
+
+    public function activate_pattern( $pattern_name ) {
         if ( current_user_can( 'publish_blockmeister_patterns' ) && $pattern_name !== false ) {
             $inactive_patterns = get_option( 'blockmeister_inactive_patterns', [] );
-            
             if ( in_array( $pattern_name, $inactive_patterns, true ) ) {
                 $index = array_search( $pattern_name, $inactive_patterns, true );
-                unset( $inactive_patterns[$index] );
+                unset($inactive_patterns[$index]);
             }
-            
             $pattern = $this->get_registered_pattern( $pattern_name );
             /* translators: placeholder will be replaced by the name of the pattern that was activated */
             $notice = wp_sprintf( __( "Pattern '%s' has been activated.", 'blockmeister' ), $pattern['title'] );
             sort( $inactive_patterns );
             update_option( 'blockmeister_inactive_patterns', $inactive_patterns );
         } else {
-            $notice = new WP_Error( 'activate-not-allowed', __( 'You have insufficient rights to activate patterns.', 'blockmeister' ) );
+            $notice = new WP_Error('activate-not-allowed', __( 'You have insufficient rights to activate patterns.', 'blockmeister' ));
         }
-        
         return $notice;
     }
-    
+
     /**
      * @param string $pattern_name Pattern name including namespace
      *
      * @return array|null
      */
-    private function get_registered_pattern( $pattern_name )
-    {
+    private function get_registered_pattern( $pattern_name ) {
         $patterns_registry = \WP_Block_Patterns_Registry::get_instance();
         return $registered_pattern = $patterns_registry->get_registered( $pattern_name );
     }
-    
-    public function deactivate_pattern( $pattern_name )
-    {
-        
+
+    public function deactivate_pattern( $pattern_name ) {
         if ( current_user_can( 'publish_blockmeister_patterns' ) && $pattern_name !== false ) {
             $inactive_patterns = get_option( 'blockmeister_inactive_patterns', [] );
             if ( !in_array( $pattern_name, $inactive_patterns, true ) ) {
@@ -774,24 +708,21 @@ class BlockMeister_Pattern_List_Table
             sort( $inactive_patterns );
             update_option( 'blockmeister_inactive_patterns', $inactive_patterns );
         } else {
-            $notice = new WP_Error( 'deactivate-not-allowed', __( 'You have insufficient rights to deactivate patterns.', 'blockmeister' ) );
+            $notice = new WP_Error('deactivate-not-allowed', __( 'You have insufficient rights to deactivate patterns.', 'blockmeister' ));
         }
-        
         return $notice;
     }
-    
+
     /**
      * If current user is allowed to and the uploaded file is 'sane'
      * it will be inserted as a blockmeister_pattern post.
      *
      * @return array|string|WP_Error
      */
-    private function import_patterns()
-    {
-        
+    private function import_patterns() {
         if ( current_user_can( 'publish_blockmeister_patterns' ) && current_user_can( 'import' ) ) {
             if ( !isset( $_FILES['file'] ) ) {
-                return new WP_Error( 'no-upload', esc_html__( 'There where no files uploaded to import.', 'blockmeister' ) );
+                return new WP_Error('no-upload', esc_html__( 'There where no files uploaded to import.', 'blockmeister' ));
             }
             // rearrange $_FILES['file'] (for easier use)
             $files = [];
@@ -803,24 +734,19 @@ class BlockMeister_Pattern_List_Table
             // decode, check format, save imported file(s) data:
             foreach ( $files as $file ) {
                 $decoded = JSON_File_Uploader::decode_json_file( $file );
-                
                 if ( is_wp_error( $decoded ) ) {
                     return $decoded;
                     // = WP_Error
                 } else {
                     $pattern_import_data = $this->check_pattern_import_data_format( $decoded );
-                    
                     if ( is_wp_error( $pattern_import_data ) ) {
                         return $pattern_import_data;
                         // = WP_Error
                     } else {
                         $this->insert_imported_pattern_as_post( $pattern_import_data );
                     }
-                
                 }
-            
             }
-            
             if ( count( $files ) === 1 ) {
                 /* translators: placeholder will be replaced by the name of the pattern */
                 $notice = wp_sprintf( __( "Pattern '%s' has been imported.", 'blockmeister' ), $pattern_import_data['title'] );
@@ -828,14 +754,12 @@ class BlockMeister_Pattern_List_Table
                 /* translators: placeholder will be replaced by the number of the patterns that were imported */
                 $notice = wp_sprintf( __( "%d patterns imported.", 'blockmeister' ), count( $files ) );
             }
-        
         } else {
-            $notice = new WP_Error( 'no-permission', __( 'You have insufficient rights to import patterns.', 'blockmeister' ) );
+            $notice = new WP_Error('no-permission', __( 'You have insufficient rights to import patterns.', 'blockmeister' ));
         }
-        
         return $notice;
     }
-    
+
     /**
      * Checks data format
      * Users can import blockmeister_pattern data or core reusable (exported) data.
@@ -844,10 +768,9 @@ class BlockMeister_Pattern_List_Table
      *
      * @return WP_Error|array The import data (as associative array) or WP_Error when data format is invalid. The data is safe to store in the DB.
      */
-    private function check_pattern_import_data_format( $pattern_import_data )
-    {
-        $required_keys = [ '__file', 'title', 'content' ];
-        $invalid_json_error = new WP_Error( 'invalid-json-format', __( 'Invalid data format.', 'blockmeister' ) );
+    private function check_pattern_import_data_format( $pattern_import_data ) {
+        $required_keys = ['__file', 'title', 'content'];
+        $invalid_json_error = new WP_Error('invalid-json-format', __( 'Invalid data format.', 'blockmeister' ));
         // check if required keys exist (else return WP Error: invalid format):
         foreach ( $required_keys as $required_key ) {
             if ( !isset( $pattern_import_data[$required_key] ) ) {
@@ -855,14 +778,14 @@ class BlockMeister_Pattern_List_Table
             }
         }
         // check supported file formats (currently blockmeister pattern export files and core reusable block export files)
-        $supported_file_formats = [ 'blockmeister_pattern', 'wp_block' ];
+        $supported_file_formats = ['blockmeister_pattern', 'wp_block'];
         if ( !in_array( $pattern_import_data['__file'], $supported_file_formats ) ) {
             return $invalid_json_error;
         }
         return $pattern_import_data;
         // = not sanitized at this point!
     }
-    
+
     /**
      * Inserts the imported data as blockmeister_pattern post.
      * Missing pattern_category terms will be inserted to.
@@ -876,8 +799,7 @@ class BlockMeister_Pattern_List_Table
      *
      * @return int|WP_Error
      */
-    private function insert_imported_pattern_as_post( $pattern_import_data )
-    {
+    private function insert_imported_pattern_as_post( $pattern_import_data ) {
         $insert_post_args = [
             'post_title'     => $pattern_import_data['title'] . ' (' . esc_html__( 'import', 'blockmeister' ) . ')',
             'post_status'    => 'draft',
@@ -904,7 +826,7 @@ class BlockMeister_Pattern_List_Table
                 if ( $ids ) {
                     $affected_term_taxonomy_ids = wp_set_post_terms(
                         $new_post_id,
-                        [ $ids['term_id'] ],
+                        [$ids['term_id']],
                         'pattern_category',
                         true
                     );
@@ -926,7 +848,7 @@ class BlockMeister_Pattern_List_Table
         }
         return $new_post_id;
     }
-    
+
     /**
      * Fires when a custom bulk action should be handled.
      *
@@ -942,8 +864,7 @@ class BlockMeister_Pattern_List_Table
      *
      * @return string The redirect URL.
      */
-    public function handle_bulk_actions( $redirectURL, $doaction, $pattern_post_ids )
-    {
+    public function handle_bulk_actions( $redirectURL, $doaction, $pattern_post_ids ) {
         $num_successful = 0;
         foreach ( $pattern_post_ids as $pattern_post_id ) {
             $pattern_name = $this->get_pattern_name( $pattern_post_id );
@@ -974,7 +895,7 @@ class BlockMeister_Pattern_List_Table
         //$redirect_to            = add_query_arg( $query_args, $redirectURL );
         return $redirectURL;
     }
-    
+
     /**
      * Filters the action updated messages.
      * By default, custom post types use the messages for the 'post' post type.
@@ -986,9 +907,7 @@ class BlockMeister_Pattern_List_Table
      *
      * @return array[] The update messages.
      */
-    public function filter_bulk_action_result_messages( $bulk_messages, $bulk_counts )
-    {
-        
+    public function filter_bulk_action_result_messages( $bulk_messages, $bulk_counts ) {
         if ( isset( $_GET['post_type'] ) && $_GET['post_type'] === 'blockmeister_pattern' ) {
             $bulk_counts['activated'] = ( isset( $_REQUEST['activated'] ) ? absint( $_REQUEST['activated'] ) : 0 );
             $bulk_counts['deactivated'] = ( isset( $_REQUEST['deactivated'] ) ? absint( $_REQUEST['deactivated'] ) : 0 );
@@ -1001,7 +920,6 @@ class BlockMeister_Pattern_List_Table
             ];
             // note: edit.php has no filter to add custom keys to its $block_counts,
             //       therefore we re-use 'updated' key which we override if applicable:
-            
             if ( isset( $_REQUEST['activated'] ) ) {
                 /* translators: %s: Number of patterns. */
                 $bulk_messages['post']['updated'] = _n( '%s pattern activated.', '%s patterns activated.', $bulk_counts['activated'] );
@@ -1009,12 +927,10 @@ class BlockMeister_Pattern_List_Table
                 /* translators: %s: Number of patterns. */
                 $bulk_messages['post']['updated'] = _n( '%s pattern deactivated.', '%s patterns deactivated.', $bulk_counts['deactivated'] );
             }
-        
         }
-        
         return $bulk_messages;
     }
-    
+
     /**
      * Filters on category on the raw post results array, prior to status checks.
      * If there is a filter arg then we remove post based on filtered state them from the post results.
@@ -1027,8 +943,7 @@ class BlockMeister_Pattern_List_Table
      * @return \WP_Post[]
      *
      */
-    public function filter_table_list_rows_on_category( $posts, $wp_query )
-    {
+    public function filter_table_list_rows_on_category( $posts, $wp_query ) {
         // if no applicable filter then do nothing but return the posts as is
         if ( $wp_query->query['post_type'] !== 'blockmeister_pattern' || !isset( $_GET['filter_action'] ) || !isset( $_GET['category'] ) || $_GET['category'] === '0' ) {
             return $posts;
@@ -1045,9 +960,8 @@ class BlockMeister_Pattern_List_Table
         }
         return $filtered_posts;
     }
-    
-    private function sort_posts( $posts, $order, $orderByColumn )
-    {
+
+    private function sort_posts( $posts, $order, $orderByColumn ) {
         switch ( $orderByColumn ) {
             case 'date':
                 $orderBy = [

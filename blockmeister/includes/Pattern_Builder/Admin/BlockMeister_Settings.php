@@ -6,27 +6,23 @@
  */
 namespace ProDevign\BlockMeister\Pattern_Builder\Admin;
 
-use function  ProDevign\BlockMeister\blockmeister_license ;
-class BlockMeister_Settings
-{
-    public function __construct()
-    {
+use function ProDevign\BlockMeister\blockmeister_license;
+class BlockMeister_Settings {
+    public function __construct() {
     }
-    
-    public function init()
-    {
-        add_action( 'admin_menu', array( $this, 'create_settings' ) );
-        add_action( 'admin_init', array( $this, 'setup_sections' ) );
-        add_action( 'admin_init', array( $this, 'setup_fields' ) );
+
+    public function init() {
+        add_action( 'admin_menu', array($this, 'create_settings') );
+        add_action( 'admin_init', array($this, 'setup_sections') );
+        add_action( 'admin_init', array($this, 'setup_fields') );
     }
-    
-    public function create_settings()
-    {
+
+    public function create_settings() {
         $page_title = 'BlockMeister Settings';
         $menu_title = esc_html__( 'Settings', 'blockmeister' );
         $capability = 'manage_options';
         $slug = 'Settings';
-        $callback = array( $this, 'settings_content' );
+        $callback = array($this, 'settings_content');
         add_submenu_page(
             'edit.php?post_type=blockmeister_pattern',
             $page_title,
@@ -36,9 +32,8 @@ class BlockMeister_Settings
             $callback
         );
     }
-    
-    public function settings_content()
-    {
+
+    public function settings_content() {
         ?>
         <div class="wrap">
             <h1><?php 
@@ -56,9 +51,8 @@ class BlockMeister_Settings
             </form>
         </div> <?php 
     }
-    
-    public function setup_sections()
-    {
+
+    public function setup_sections() {
         add_settings_section(
             'uninstall_settings_section',
             esc_html__( 'BlockMeister Plugin Uninstall Settings', 'blockmeister' ),
@@ -66,22 +60,21 @@ class BlockMeister_Settings
             'Settings'
         );
     }
-    
-    public function setup_fields()
-    {
-        $fields = [ [
+
+    public function setup_fields() {
+        $fields = [[
             'section' => 'uninstall_settings_section',
             'label'   => esc_html__( 'Delete all data when I uninstall this plugin', 'blockmeister' ),
             'id'      => 'blockmeister_delete_data_on_uninstall',
             'desc'    => esc_html__( 'Be aware: if selected, when BlockMeister is being uninstalled, all data created through BlockMeister will be deleted, definitely! This does not affect block patterns inserted in posts or pages though.', 'blockmeister' ),
             'type'    => 'checkbox',
             'default' => '',
-        ] ];
+        ]];
         foreach ( $fields as $field ) {
             add_settings_field(
                 $field['id'],
                 $field['label'],
-                array( $this, 'field_callback' ),
+                array($this, 'field_callback'),
                 'Settings',
                 $field['section'],
                 $field
@@ -89,9 +82,8 @@ class BlockMeister_Settings
             register_setting( 'Settings', $field['id'] );
         }
     }
-    
-    public function field_callback( $field )
-    {
+
+    public function field_callback( $field ) {
         $value = get_option( $field['id'], $field['default'] );
         $placeholder = '';
         if ( isset( $field['placeholder'] ) ) {

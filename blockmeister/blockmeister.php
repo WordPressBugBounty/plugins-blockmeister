@@ -4,7 +4,7 @@
  * Plugin Name: BlockMeister
  * Plugin URI: https://wpblockmeister.com/
  * Description: Block pattern builder. Lets you easily and visually create custom block patterns.
- * Version: 3.1.10
+ * Version: 3.1.11
  * Requires at least: 6.0
  * Requires PHP: 5.6
  * Author: BlockMeister
@@ -39,7 +39,6 @@ if ( !defined( 'ABSPATH' ) ) {
 // Register autoloader for classes in our package:
 spl_autoload_register( function ( $class ) {
     $is_blockmeister_class = substr( $class, 0, strlen( __NAMESPACE__ ) ) === __NAMESPACE__;
-    
     if ( $is_blockmeister_class ) {
         $class_sans_ns = str_replace( __NAMESPACE__, '', $class );
         $class_sans_ns_with_forward_slashes = str_replace( '\\', '/', $class_sans_ns );
@@ -47,18 +46,14 @@ spl_autoload_register( function ( $class ) {
         $class_path = __DIR__ . '/includes' . $class_file;
         include $class_path;
     }
-
 } );
 // Add activation hook before the freemius one:
-register_activation_hook( plugin_basename( __FILE__ ), [ new Activator(), 'activate' ] );
+register_activation_hook( plugin_basename( __FILE__ ), [new Activator(), 'activate'] );
 // setup freemius licensing SDK:
-
 if ( !function_exists( 'ProDevign\\BlockMeister\\blockmeister_license' ) ) {
     // Create a helper function for easy SDK access.
-    function blockmeister_license()
-    {
-        global  $blockmeister_license ;
-        
+    function blockmeister_license() {
+        global $blockmeister_license;
         if ( !isset( $blockmeister_license ) ) {
             // Activate multisite network integration.
             if ( !defined( 'WP_FS__PRODUCT_6729_MULTISITE' ) ) {
@@ -75,26 +70,24 @@ if ( !function_exists( 'ProDevign\\BlockMeister\\blockmeister_license' ) ) {
                 'has_addons'     => false,
                 'has_paid_plans' => true,
                 'trial'          => array(
-                'days'               => 7,
-                'is_require_payment' => true,
-            ),
+                    'days'               => 7,
+                    'is_require_payment' => true,
+                ),
                 'menu'           => array(
-                'slug'    => 'edit.php?post_type=blockmeister_pattern',
-                'network' => true,
-            ),
+                    'slug'    => 'edit.php?post_type=blockmeister_pattern',
+                    'network' => true,
+                ),
                 'is_live'        => true,
             ) );
         }
-        
         return $blockmeister_license;
     }
-    
+
     // Init Freemius.
     blockmeister_license();
     // Signal that SDK was initiated.
     do_action( 'blockmeister_license_loaded' );
 }
-
 /**
  * Filter blockmeister admin menu's submenus (Contact|Forum) visibility
  * Always show 'Block Patterns -> Contact Us',
@@ -108,15 +101,13 @@ if ( !function_exists( 'ProDevign\\BlockMeister\\blockmeister_license' ) ) {
 blockmeister_license()->add_filter(
     'is_submenu_visible',
     function ( $is_visible, $id ) {
-    
-    if ( 'support' === $id ) {
-        $is_free = blockmeister_license()->is_free_plan();
-        $is_not_paying_and_not_trial = !blockmeister_license()->is_paying_or_trial();
-        $is_visible = $is_free || $is_not_paying_and_not_trial;
-    }
-    
-    return $is_visible;
-},
+        if ( 'support' === $id ) {
+            $is_free = blockmeister_license()->is_free_plan();
+            $is_not_paying_and_not_trial = !blockmeister_license()->is_paying_or_trial();
+            $is_visible = $is_free || $is_not_paying_and_not_trial;
+        }
+        return $is_visible;
+    },
     10,
     2
 );

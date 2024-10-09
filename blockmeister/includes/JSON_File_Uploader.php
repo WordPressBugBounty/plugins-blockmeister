@@ -29,6 +29,7 @@ class JSON_File_Uploader {
 
 
 	public function get_html() {
+        $action_url = esc_url( $this->target_url );
 		$drop_instruction = esc_html__('Drop files to upload','blockmeister' );
 		$select_instruction = esc_html__( 'Select Files', 'blockmeister' );
 		$close_text = esc_html__( 'Close uploader', 'blockmeister' );
@@ -39,7 +40,7 @@ class JSON_File_Uploader {
 		                     esc_html__( 'Only import patterns you downloaded from trusted sources or manually validate the pattern code before importing.', 'blockmeister' );
 
 		return $html = <<<FORM
-			<form method="POST" enctype="multipart/form-data" action="{$this->target_url}" class="imports">
+			<form method="POST" enctype="multipart/form-data" action="{$action_url}" class="imports">
 			<p><sup></sup>{$import_disclaimer}</p>
 			    <div id="spinner-wrapper">
                     <img src="/wp-includes/images/spinner.gif" class="loading">		       

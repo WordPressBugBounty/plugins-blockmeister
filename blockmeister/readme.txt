@@ -6,7 +6,7 @@ Donate link: https://wpblockmeister.com/
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 5.6
-Stable tag: 3.1.10
+Stable tag: 3.1.11
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -27,6 +27,7 @@ You can assign any (custom) category or keywords. By doing so, your patterns are
 - Optionally add any keywords (makes them easy to find in the block inserter)
 - Create custom pattern categories
 - Set a viewport width to optimize the scaled width of the preview in the block inserter
+
 
 **Pro Features**
 If you would like even more features like: group locking, cloning, activating or deactivating individual patterns, exporting, importing, controlling which core/third party pattern sets are allowed to load, setting block styles and more, please check out our premium versions here:
@@ -67,8 +68,10 @@ OR upgrade to a premium version which comes with a built-in block level CSS edit
 
 = Does the plugin run on older WordPress installations? =
 
-Normally the plugin will require either the latest major release or the one before that. But with the release of WP 6.3 that release will be required with the upcoming v4 release of BlockMeister. See announcement above for the reason why. 
+The plugin will require either the latest major release or the one before that.
+So if the current major release is 6.2 then the plugin requires at least WP 6.1
 
+This helps us to keep the code clean and limit the test cases.
 
 = Why did we integrate Freemius? =
 Freemius is a managed eCommerce platform for selling WordPress plugins and themes.
@@ -102,6 +105,9 @@ You can read more about this at the <a href="https://freemius.com/privacy/data-p
 3. Block pattern settings sidebar.
 
 == Changelog ==
+= [3.1.11] - 2024-10-08 =
+- Fixed vulnerability: unescaped form URL (thank you 'vgo0' for reporting)
+
 = [3.1.10] - 2023-07-05 =
 - Upgraded dependencies to latest versions:
   - NPM package classnames 2.3.2

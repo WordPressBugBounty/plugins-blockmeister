@@ -2,33 +2,32 @@
 
 namespace ProDevign\BlockMeister\Pattern_Builder;
 
-use  ProDevign\BlockMeister\Context ;
-use function  ProDevign\BlockMeister\blockmeister_license ;
+use ProDevign\BlockMeister\Context;
+use function ProDevign\BlockMeister\blockmeister_license;
 if ( !defined( 'ABSPATH' ) ) {
     exit;
 }
-final class Pattern_Builder
-{
-    const  POST_TYPE = 'blockmeister_pattern' ;
+final class Pattern_Builder {
+    const POST_TYPE = 'blockmeister_pattern';
+
     /**
      * @var Pattern_Builder
      */
-    private static  $instance = null ;
+    private static $instance = null;
+
     /**
      * Constructor for the Pattern_Builder class
      */
-    private function __construct()
-    {
+    private function __construct() {
     }
-    
+
     /**
      * @return Pattern_Builder
      */
-    public static function get_instance()
-    {
+    public static function get_instance() {
         return Pattern_Builder::$instance;
     }
-    
+
     /**
      * Runs (and initializes) Pattern_Builder
      *
@@ -37,9 +36,7 @@ final class Pattern_Builder
      *
      * @return void
      */
-    public static function init()
-    {
-        
+    public static function init() {
         if ( is_null( Pattern_Builder::$instance ) ) {
             $pattern_builder = Pattern_Builder::$instance = new Pattern_Builder();
             ( new Assets() )->init();
@@ -54,14 +51,13 @@ final class Pattern_Builder
             ( new Admin\BlockMeister_Settings() )->init();
             blockmeister_license()->add_filter(
                 'show_admin_notice',
-                [ $pattern_builder, 'show_admin_notice_only_in_blockmeister_context_filter' ],
+                [$pattern_builder, 'show_admin_notice_only_in_blockmeister_context_filter'],
                 10,
                 2
             );
         }
-    
     }
-    
+
     /**
      * Filter makes sure the Freemius admin notices are only shown on:
      * - the blockmeister_pattern list table screen
@@ -80,12 +76,12 @@ final class Pattern_Builder
      * }
      * @return bool
      */
-    public function show_admin_notice_only_in_blockmeister_context_filter( $show, $msg )
-    {
-        global  $pagenow ;
+    public function show_admin_notice_only_in_blockmeister_context_filter( $show, $msg ) {
+        global $pagenow;
         $is_plugin_list_table_screen = $pagenow === 'plugins.php';
         return Context::is_blockmeister_pattern_list_table() || Context::is_blockmeister_pattern_category_list_table() || $is_plugin_list_table_screen;
     }
 
 }
+
 // Pattern_Builder
