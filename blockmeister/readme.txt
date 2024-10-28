@@ -4,7 +4,7 @@ Author URI: https://wpblockmeister.com
 Tags: Gutenberg, patterns, block patterns, pattern builder
 Donate link: https://wpblockmeister.com/
 Requires at least: 6.0
-Tested up to: 6.6
+Tested up to: 6.7
 Requires PHP: 5.6
 Stable tag: 3.1.11
 License: GPLv2 or later
@@ -105,6 +105,7 @@ You can read more about this at the <a href="https://freemius.com/privacy/data-p
 3. Block pattern settings sidebar.
 
 == Changelog ==
+
 = [3.1.11] - 2024-10-08 =
 - Fixed vulnerability: unescaped form URL (thank you 'vgo0' for reporting)
 
