@@ -945,7 +945,7 @@ class BlockMeister_Pattern_List_Table {
      */
     public function filter_table_list_rows_on_category( $posts, $wp_query ) {
         // if no applicable filter then do nothing but return the posts as is
-        if ( $wp_query->query['post_type'] !== 'blockmeister_pattern' || !isset( $_GET['filter_action'] ) || !isset( $_GET['category'] ) || $_GET['category'] === '0' ) {
+        if ( !isset( $wp_query->query['post_type'] ) || $wp_query->query['post_type'] !== 'blockmeister_pattern' || !isset( $_GET['filter_action'] ) || !isset( $_GET['category'] ) || $_GET['category'] === '0' ) {
             return $posts;
         }
         $category_filter = $_GET['category'];

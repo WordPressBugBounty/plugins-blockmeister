@@ -4,7 +4,7 @@
  * Plugin Name: BlockMeister
  * Plugin URI: https://wpblockmeister.com/
  * Description: Block pattern builder. Lets you easily and visually create custom block patterns.
- * Version: 3.1.11
+ * Version: 3.1.12
  * Requires at least: 6.0
  * Requires PHP: 5.6
  * Author: BlockMeister

@@ -13,7 +13,7 @@ final class BlockMeister {
 	/**
 	 * Plugin version
 	 */
-	const  VERSION = '3.1.11';
+	const  VERSION = '3.1.12';
 
 	/**
 	 * The minimum PHP version that is required to run this plugin
